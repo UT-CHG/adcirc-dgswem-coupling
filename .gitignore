@@ -5,6 +5,13 @@
 build/
 build_debug/
 
+# Python -- basic files, just in case
+setup.py
+pyadcircdgswem_path.py
+__pycache__/
+*.py[cod]
+*$py.class
+
 #------------------------------------------------------------------------------#
 # Original Fortran .gitignore
 #------------------------------------------------------------------------------#
