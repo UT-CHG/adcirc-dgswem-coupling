@@ -4,16 +4,26 @@ project(adcircdgswem LANGUAGES Fortran)
 
 enable_language(Fortran)
 
-option(BUILD_DEBUG "Build in debug mode" OFF)
 option(USE_MPI "Build parallel version of adcircdgswem" OFF)
 
 # CMake settings
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/mod")
 
+#------------------------------------------------------------------------------#
+# Build type
+include(BuildType) # For CMAKE_BUILD_TYPE=<options>
+
+if(CMAKE_BUILD_TYPE MATCHES "Debug"
+        OR CMAKE_BUILD_TYPE MATCHES "ExtraDebug")
+    set(BUILD_DEBUG "ON")
+endif()
+
+#------------------------------------------------------------------------------#
 # Source Files
 file(GLOB SOURCES "src/*.F95")
 # Filter out the main program file to compile the rest into a library.
@@ -23,28 +33,7 @@ list(FILTER SOURCES EXCLUDE REGEX ".*src/adcircdgswem_program.F95$")
 # Build Options
 #------------------------------------------#
 # Mandatory definitionas
-add_definitions(-DREAL8 -DLINUX)
-set(FFLAGS ${FFLAGS} -DREAL8 -DLINUX)
-
-#------------------------------------------#
-# Build - Debug
-if(BUILD_DEBUG)
-    add_definitions(-g -O0 -DDEBUG)
-    set(FFLAGS ${FFLAGS} -g -O0 -DDEBUG)
-    if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-        add_definitions(-fimplicit-none -Wall -fcheck=all -pedantic -fbacktrace)
-    elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-        add_definitions(-check all -traceback)
-    elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Clang")
-        # using Clang -- To Do
-    elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "MSVC")
-        # using Visual Studio C++ -- To Do
-    endif()
-else(BUILD_DEBUG)
-    set(FFLAGS ${FFLAGS} -Wno-unused-variable)
-    set(FFLAGS ${FFLAGS} -Wno-unused-function)
-    set(FFLAGS ${FFLAGS} -Wno-unused-parameter)
-endif(BUILD_DEBUG)
+set(FFLAGS2 ${FFLAGS2} -DREAL8 -DLINUX)
 
 #------------------------------------------#
 # Build - MPI
@@ -54,18 +43,15 @@ if(USE_MPI)
     set(CMAKE_Fortran_COMPILER "${MPI_Fortran_COMPILER}")
     set(CMAKE_C_COMPILER "${MPI_C_COMPILER}")
     set(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}")
-    add_definitions(-DMPI)
-    set(FFLAGS ${FFLAGS} -DMPI)
+    set(FFLAGS2 ${FFLAGS2} -DMPI)
     if(BUILD_DEBUG)
-        add_definitions(-DDEBUG_MPI)
-        set(FFLAGS ${FFLAGS} -DDEBUG_MPI)
+        set(FFLAGS2 ${FFLAGS2} -DDEBUG_MPI)
     endif(BUILD_DEBUG)
     #ADCIRC's definitions when MPI is enabled
-    #add_definitions(-DCMPI -DHAVE_MPI_MOD -DCSCA)
-    #set(FFLAGS ${FFLAGS} -DCMPI -DHAVE_MPI_MOD -DCSCA)
-else()
-    # Do nothing for now.
+    #set(FFLAGS2 ${FFLAGS2} -DCMPI -DHAVE_MPI_MOD -DCSCA)
 endif(USE_MPI)
+add_definitions(${FFLAGS2})
+set(FFLAGS ${FFLAGS} ${FFLAGS2})
 
 #------------------------------------------------------------------------------#
 # Targets
