@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(adcircdgswem LANGUAGES Fortran)
+set(LIBRARY_NAME "adcircdgswem_static")
 
 enable_language(Fortran)
 
 option(USE_MPI "Build parallel version of adcircdgswem" OFF)
+option(ENABLE_TESTS "Enable CTest testing" ON)
 
 # CMake settings
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
@@ -16,6 +18,13 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/mod")
 
 #------------------------------------------------------------------------------#
 # Build type
+include(CTest)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    include(CodeCoverage)
+    append_coverage_compiler_flags()
+endif()
+
 include(BuildType) # For CMAKE_BUILD_TYPE=<options>
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug"
@@ -57,11 +66,16 @@ set(FFLAGS ${FFLAGS} ${FFLAGS2})
 # Targets
 #------------------------------------------#
 # Static Library
-add_library(adcircdgswem_static_obj OBJECT ${SOURCES})
-add_library(adcircdgswem_static STATIC $<TARGET_OBJECTS:adcircdgswem_static_obj>)
+add_library(${LIBRARY_NAME}_obj OBJECT ${SOURCES})
+add_library(${LIBRARY_NAME} STATIC $<TARGET_OBJECTS:adcircdgswem_static_obj>)
 
 #------------------------------------------#
 # Executable
 add_executable(${PROJECT_NAME} "src/adcircdgswem_program.F95") 
-target_link_libraries(${PROJECT_NAME} adcircdgswem_static)
+target_link_libraries(${PROJECT_NAME} ${LIBRARY_NAME})
 
+#------------------------------------------#
+# Unit tests
+if(ENABLE_TESTS)
+    add_subdirectory(tests)
+endif() # if(ENABLE_TESTS)

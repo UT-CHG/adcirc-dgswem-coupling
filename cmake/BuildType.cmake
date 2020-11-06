@@ -14,7 +14,7 @@ endif()
 #------------------------------------------------------------------------------#
 # Build type
 if(NOT CMAKE_BUILD_TYPE MATCHES
-        "^(|Debug|ExtraDebug|Release|RelWithDebInfo)$")
+        "^(|Debug|ExtraDebug|Release|RelWithDebInfo|Coverage)$")
     message(FATAL_ERROR "CMAKE_BUILD_TYPE parameter should be left empty or set
             to Debug (-g -DDEBUG), ExtraDebug (-g -DDEBUG -DDEBUG_TEMPORARY),
             Release, RelWithDebInfo (-g).")
@@ -38,6 +38,8 @@ elseif(CMAKE_BUILD_TYPE MATCHES "Debug")
     elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "MSVC")
         # using Visual Studio C++ -- To Do
     endif()
+elseif(CMAKE_BUILD_TYPE MATCHES "Coverage")
+    set(FFLAGS1 ${FFLAGS1} -g -O0 -DDEBUG)
 elseif(CMAKE_BUILD_TYPE MATCHES "ExtraDebug")
     set(FFLAGS1 ${FFLAGS1} -g -O0 -DDEBUG -DDEBUG_TEMPORARY)
 endif()
