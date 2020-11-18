@@ -54,11 +54,42 @@ add_definitions(${FFLAGS2})
 set(FFLAGS ${FFLAGS} ${FFLAGS2})
 
 #------------------------------------------------------------------------------#
+# Dependencies
+#------------------------------------------#
+# ADCIRC
+message("ADCIRC_ROOT_DIR=${ADCIRC_ROOT_DIR}")
+if(NOT ADCIRC_ROOT_DIR)
+    message("The Path, ADCIRC_ROOT_DIR, must be set when invoking CMake.")
+endif()
+set(ADCIRC_LIB_DIR ${ADCIRC_ROOT_DIR}/work)
+set(ADCIRC_INC_DIR ${ADCIRC_ROOT_DIR}/work/odircp)
+message("ADCIRC_LIB_DIR=${ADCIRC_LIB_DIR}")
+message("ADCIRC_INC_DIR=${ADCIRC_INC_DIR}")
+# Link
+include_directories(${ADCIRC_INC_DIR})
+link_directories(${ADCIRC_LIB_DIR})
+
+#------------------------------------------#
+# DGSWEM
+message("DGSWEM_ROOT_DIR=${DGSWEM_ROOT_DIR}")
+if(NOT DGSWEM_ROOT_DIR)
+    message("The Path, DGSWEM_ROOT_DIR, must be set when invoking CMake.")
+endif()
+set(DGSWEM_LIB_DIR ${DGSWEM_ROOT_DIR}/work)
+set(DGSWEM_INC_DIR ${DGSWEM_ROOT_DIR}/work/odir5)
+message("DGSWEM_LIB_DIR=${DGSWEM_LIB_DIR}")
+message("DGSWEM_INC_DIR=${DGSWEM_INC_DIR}")
+# Link
+include_directories(${DGSWEM_INC_DIR})
+link_directories(${DGSWEM_LIB_DIR})
+
+#------------------------------------------------------------------------------#
 # Targets
 #------------------------------------------#
 # Static Library
 add_library(adcircdgswem_static_obj OBJECT ${SOURCES})
 add_library(adcircdgswem_static STATIC $<TARGET_OBJECTS:adcircdgswem_static_obj>)
+target_link_libraries(adcircdgswem_static adc dgswem)
 
 #------------------------------------------#
 # Executable
