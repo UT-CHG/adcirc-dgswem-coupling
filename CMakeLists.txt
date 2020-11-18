@@ -76,7 +76,7 @@ if(NOT DGSWEM_ROOT_DIR)
     message("The Path, DGSWEM_ROOT_DIR, must be set when invoking CMake.")
 endif()
 set(DGSWEM_LIB_DIR ${DGSWEM_ROOT_DIR}/work)
-set(DGSWEM_INC_DIR ${DGSWEM_ROOT_DIR}/work/odir5)
+set(DGSWEM_INC_DIR ${DGSWEM_ROOT_DIR}/work/odir6)
 message("DGSWEM_LIB_DIR=${DGSWEM_LIB_DIR}")
 message("DGSWEM_INC_DIR=${DGSWEM_INC_DIR}")
 # Link
