@@ -25,9 +25,9 @@ endif()
 
 #------------------------------------------------------------------------------#
 # Source Files
-file(GLOB SOURCES "src/*.F95")
+file(GLOB SOURCES "src/*.F90")
 # Filter out the main program file to compile the rest into a library.
-list(FILTER SOURCES EXCLUDE REGEX ".*src/adcircdgswem_program.F95$")
+list(FILTER SOURCES EXCLUDE REGEX ".*src/adcircdgswem_program.F90$")
 
 #------------------------------------------------------------------------------#
 # Build Options
@@ -62,6 +62,6 @@ add_library(adcircdgswem_static STATIC $<TARGET_OBJECTS:adcircdgswem_static_obj>
 
 #------------------------------------------#
 # Executable
-add_executable(${PROJECT_NAME} "src/adcircdgswem_program.F95") 
+add_executable(${PROJECT_NAME} "src/adcircdgswem_program.F90") 
 target_link_libraries(${PROJECT_NAME} adcircdgswem_static)
 
