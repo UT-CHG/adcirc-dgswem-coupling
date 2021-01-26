@@ -14,6 +14,9 @@ module ADCouplerMain
     use adcirc_export, only: adcirc_init, adcirc_run, adcirc_final
     use dgswem_mod, only: dgswem_init, dgswem_run, dgswem_fin
 
+#ifdef HAVE_MPI_MOD
+    use mpi, only: MPI_COMM_WORLD
+#endif
     implicit none
 
 
@@ -39,12 +42,14 @@ contains
     !--------------------------------------------------------------------------!
     subroutine adcoupler_initialize()
         ! Initialize function of the ADCIRC DG-SWEM coupler.
+#ifndef HAVE_MPI_MOD
+        include 'mpif.h'
+#endif
+        ! Call DGSWEM's init function.
+        call dgswem_init()
 
         ! Call ADCIRC's init function.
-        call adcirc_init
-
-        ! Call DGSWEM's init function.
-        call dgswem_init
+        call adcirc_init(MPI_COMM_WORLD)
 
     end subroutine
 
@@ -67,12 +72,13 @@ contains
     !--------------------------------------------------------------------------!
     subroutine adcoupler_finalize()
         ! Finalize function of the ADCIRC DG-SWEM coupler.
+        logical :: no_mpi_finalize_adcirc = .true.
+
+        ! Call ADCIRC's finalize function, but don't actually call mpi_finalize!
+        call adcirc_final(no_mpi_finalize_adcirc)
 
         ! Call DGSWEM's finalize function.
         call dgswem_fin
-
-        ! Call ADCIRC's finalize function.
-        call adcirc_final
 
     end subroutine
 
