@@ -43,7 +43,7 @@ if(USE_MPI)
     set(CMAKE_Fortran_COMPILER "${MPI_Fortran_COMPILER}")
     set(CMAKE_C_COMPILER "${MPI_C_COMPILER}")
     set(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}")
-    set(FFLAGS2 ${FFLAGS2} -DMPI)
+    set(FFLAGS2 ${FFLAGS2} -DMPI -DHAVE_MPI_MOD)
     if(BUILD_DEBUG)
         set(FFLAGS2 ${FFLAGS2} -DDEBUG_MPI)
     endif(BUILD_DEBUG)
@@ -82,6 +82,8 @@ message("DGSWEM_INC_DIR=${DGSWEM_INC_DIR}")
 # Link
 include_directories(${DGSWEM_INC_DIR})
 link_directories(${DGSWEM_LIB_DIR})
+
+set(CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS} -fvisibility=hidden )
 
 #------------------------------------------------------------------------------#
 # Targets
