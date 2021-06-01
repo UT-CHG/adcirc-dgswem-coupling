@@ -77,6 +77,9 @@ module ADCouplerMain
     integer etmininc_count
     integer ftmininc_count
     real(sz_AD) time_a_AD
+    real(sz_AD) temp_NX, temp_NY
+    real(sz_AD) avg_NX, avg_NY
+    integer coupl_dir
 
     real,allocatable :: temp_ESBIN1_DG(:),temp_ESBIN2_DG(:)
     real,allocatable :: temp_ESBIN1_AD(:),temp_ESBIN2_AD(:)
@@ -196,7 +199,7 @@ contains
             endif
             !write(6,*) 'NBV_DG(i)', nbv_DG(i)
         enddo
-        write(6,*) 'num_flux_DG', num_flux_DG
+        !write(6,*) 'num_flux_DG', num_flux_DG
 
         if(num_flux_DG.gt.num_flux_AD) then
             max_flow_nvel = num_flux_DG
@@ -217,7 +220,7 @@ contains
   
 
 
-        do while (adc_tprev.lt.adc_tfinal)
+        do while (adc_tprev.lt.adc_tfinal) !adc_tfinal
             
             !Increase step counter
             ntsteps = ntsteps + 1
@@ -281,15 +284,47 @@ contains
             ! correct flow direction over the coupling boundary
             if((ntsteps.eq.1).and.(my_id.eq.coupl_DG_id)) then
                 global_edge_num = nfedn_DG(2)
+                temp_NX = 0.d0
+                temp_NY = 0.d0
                 !write(6,*) 'global flow edge num DG ', global_edge_num
-                !write(6,*) 'NX ', norm_X_DG(global_edge_num)
-                !write(6,*) 'NY', norm_Y_DG(global_edge_num)
-                if(norm_X_DG(global_edge_num).gt.0) then
-                    flow_corr_fac_TEMP = -1
+                ! no edges is num nodes -1 !
+                do i = 1, num_flux_DG-1
+                    !write(6,*) 'global flow edge num DG ', nfedn_DG(i)
+                    !write(6,*) 'NX ', norm_X_DG(nfedn_DG(i))
+                    !write(6,*) 'NY', norm_Y_DG(nfedn_DG(i))
+                    temp_NY = temp_NY + norm_Y_DG(nfedn_DG(i))
+                    temp_NX = temp_NX + norm_X_DG(nfedn_DG(i))
+                enddo
+                !write(6,*) 'temp NX ', temp_NX
+                !write(6,*) 'temp NY ', temp_NY
+                avg_NX = temp_NX/(num_flux_DG-1)
+                avg_NY = temp_NY/(num_flux_DG-1)
+                !write(6,*) 'avg NX ', avg_NX
+                !write(6,*) 'avg NY ', avg_NY
+                if(abs(avg_NX).gt.abs(avg_NY)) then
+                    coupl_dir = 0
+                    write(6,*) 'Coupling is in the x direction '
+                else if(abs(avg_NX).lt.abs(avg_NY)) then
+                    coupl_dir = 1
+                    write(6,*) 'Coupling is in the y direction '
+                else
+                    write(6,*) 'Coupling is 45 degrees, check boundary!'
+                    write(6,*)  'Calling mpi abort '
+                    call mpi_abort(MPI_COMM_WORLD, 2, ierr)
                 endif
-                if(norm_X_DG(global_edge_num).lt.0) then
+                
+                !Now we set the correction factor
+                
+                if((avg_NX.gt.0).and.(coupl_dir.eq.0)) then
+                    flow_corr_fac_TEMP = -1
+                else if((avg_NX.lt.0).and.(coupl_dir.eq.0)) then
+                    flow_corr_fac_TEMP = 1
+                else if((avg_NY.gt.0).and.(coupl_dir.eq.1)) then
+                    flow_corr_fac_TEMP = -1
+                else if((avg_NY.lt.0).and.(coupl_dir.eq.1)) then
                     flow_corr_fac_TEMP = 1
                 endif
+                write(6,*)  'Flow correction ', flow_corr_fac_TEMP
             endif
             if(ntsteps.eq.1) then
                 call mpi_allreduce(flow_corr_fac_TEMP, flow_corr_fac, 1, mpi_int, MPI_MAX, MPI_COMM_WORLD,ierr)
@@ -303,13 +338,22 @@ contains
 
             if((nope_AD.gt.0).and.(my_id.eq.coupl_AD_id)) then
 
-                do i = 1, neta_AD
-                    !multiply veolcity by depth to get correct
-                    !inflow BC, the correction factor ensures
-                    temp_QNIN1_DG(i) = uu2_AD(nbdv_AD(nope_AD,i))*flow_corr_fac*(temp_ESBIN2_DG(i)+dp_AD(nbdv_AD(nope_AD,i)))
-                    temp_QNIN2_DG(i) = uu2_AD(nbdv_AD(nope_AD,i))*flow_corr_fac*(temp_ESBIN2_DG(i)+dp_AD(nbdv_AD(nope_AD,i)))
-                    !write(6,*) 'temp_QNIN2_DG', temp_QNIN2_DG(i)
-                enddo
+                !multiply veolcity by depth to get correct
+                !inflow BC and the correction factor
+                if (coupl_dir.eq.0) then
+                    do i = 1, neta_AD
+                        temp_QNIN1_DG(i) = uu2_AD(nbdv_AD(nope_AD,i))*flow_corr_fac*(eta_AD(nbdv_AD(nope_AD,i))+dp_AD(nbdv_AD(nope_AD,i)))
+                        temp_QNIN2_DG(i) = uu2_AD(nbdv_AD(nope_AD,i))*flow_corr_fac*(eta_AD(nbdv_AD(nope_AD,i))+dp_AD(nbdv_AD(nope_AD,i)))
+                        !write(6,*) 'temp_QNIN2_DG', temp_QNIN2_DG(i)
+                    enddo
+                else
+                    do i = 1, neta_AD
+                        temp_QNIN1_DG(i) = vv2_AD(nbdv_AD(nope_AD,i))*flow_corr_fac*(eta_AD(nbdv_AD(nope_AD,i))+dp_AD(nbdv_AD(nope_AD,i)))
+                        temp_QNIN2_DG(i) = vv2_AD(nbdv_AD(nope_AD,i))*flow_corr_fac*(eta_AD(nbdv_AD(nope_AD,i))+dp_AD(nbdv_AD(nope_AD,i)))
+                        !write(6,*) 'temp_QNIN2_DG', temp_QNIN2_DG(i)
+                    enddo
+                endif
+
                 !Now need to put ADCIRC data into DG code.
                 !In case we are on the same processor set the
                 !variables directly
