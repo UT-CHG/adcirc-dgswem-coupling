@@ -4,7 +4,7 @@
 ! Copyright (c) 2020, UT Austin Computational Hydrualics Group
 !
 !------------------------------------------------------------------------------!
-! File: adcircdgswem_program.F95
+! File: adcircdgswem_program.F90
 ! Author: Gajanan K Choudhary, Postdoctoral Fellow
 ! Location: The University of Texas at Austin
 ! Date created: 11/04/2020
